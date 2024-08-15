@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import Speech from "./Speech";
 import {
   Sun,
   Moon,
@@ -6,7 +7,6 @@ import {
   ChevronDown,
   ArrowRight,
   Send,
-  Mic,
   X,
 } from "lucide-react";
 
@@ -449,9 +449,7 @@ const FinanceApp = () => {
                 >
                   <Send size={20} />
                 </button>
-                <button className="ml-2 bg-gray-200 text-gray-700 p-2 rounded-md hover:bg-gray-300 transition-colors dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600">
-                  <Mic size={20} />
-                </button>
+                <Speech />
               </div>
             </div>
           </div>
