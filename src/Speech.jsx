@@ -1,15 +1,29 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Mic } from "lucide-react";
+import { FFmpeg } from "@ffmpeg/ffmpeg";
+import { fetchFile } from "@ffmpeg/util";
 
 const Speech = () => {
   const [isRecording, setIsRecording] = useState(false);
+  const [ffmpeg, setFfmpeg] = useState(null);
   const mediaRecorder = useRef(null);
   const audioChunks = useRef([]);
+
+  useEffect(() => {
+    const loadFFmpeg = async () => {
+      const ffmpegInstance = new FFmpeg();
+      await ffmpegInstance.load();
+      setFfmpeg(ffmpegInstance);
+    };
+    loadFFmpeg();
+  }, []);
 
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaRecorder.current = new MediaRecorder(stream);
+      mediaRecorder.current = new MediaRecorder(stream, {
+        mimeType: "audio/webm",
+      });
 
       mediaRecorder.current.ondataavailable = (event) => {
         if (event.data.size > 0) {
@@ -17,13 +31,14 @@ const Speech = () => {
         }
       };
 
-      mediaRecorder.current.onstop = () => {
-        const audioBlob = new Blob(audioChunks.current, { type: "audio/wav" });
-        const audioUrl = URL.createObjectURL(audioBlob);
-        console.log("녹음된 오디오 URL:", audioUrl);
+      mediaRecorder.current.onstop = async () => {
+        const audioBlob = new Blob(audioChunks.current, { type: "audio/webm" });
+        const mp3Blob = await convertToMp3(audioBlob);
+        const mp3Url = URL.createObjectURL(mp3Blob);
+        console.log("녹음된 MP3 오디오 URL:", mp3Url);
 
-        // 오디오를 재생하거나 서버로 전송하는 등의 추가 작업을 여기서 수행할 수 있습니다.
-        const audio = new Audio(audioUrl);
+        // MP3 오디오를 재생
+        const audio = new Audio(mp3Url);
         audio.play();
       };
 
@@ -48,6 +63,23 @@ const Speech = () => {
     } else {
       startRecording();
     }
+  };
+
+  const convertToMp3 = async (audioBlob) => {
+    if (!ffmpeg) {
+      console.error("FFmpeg is not loaded yet");
+      return audioBlob;
+    }
+
+    const inputName = "input.webm";
+    const outputName = "output.mp3";
+
+    await ffmpeg.writeFile(inputName, await fetchFile(audioBlob));
+
+    await ffmpeg.exec(["-i", inputName, "-acodec", "libmp3lame", outputName]);
+
+    const data = await ffmpeg.readFile(outputName);
+    return new Blob([data.buffer], { type: "audio/mp3" });
   };
 
   return (
