@@ -1,29 +1,16 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef } from "react";
 import { Mic } from "lucide-react";
-import { FFmpeg } from "@ffmpeg/ffmpeg";
-import { fetchFile } from "@ffmpeg/util";
 
 const Speech = () => {
   const [isRecording, setIsRecording] = useState(false);
-  const [ffmpeg, setFfmpeg] = useState(null);
+  const [isProcessing, setIsProcessing] = useState(false);
   const mediaRecorder = useRef(null);
   const audioChunks = useRef([]);
-
-  useEffect(() => {
-    const loadFFmpeg = async () => {
-      const ffmpegInstance = new FFmpeg();
-      await ffmpegInstance.load();
-      setFfmpeg(ffmpegInstance);
-    };
-    loadFFmpeg();
-  }, []);
 
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaRecorder.current = new MediaRecorder(stream, {
-        mimeType: "audio/webm",
-      });
+      mediaRecorder.current = new MediaRecorder(stream);
 
       mediaRecorder.current.ondataavailable = (event) => {
         if (event.data.size > 0) {
@@ -32,14 +19,10 @@ const Speech = () => {
       };
 
       mediaRecorder.current.onstop = async () => {
-        const audioBlob = new Blob(audioChunks.current, { type: "audio/webm" });
-        const mp3Blob = await convertToMp3(audioBlob);
-        const mp3Url = URL.createObjectURL(mp3Blob);
-        console.log("녹음된 MP3 오디오 URL:", mp3Url);
+        const audioBlob = new Blob(audioChunks.current, { type: "audio/wav" });
 
-        // MP3 오디오를 재생
-        const audio = new Audio(mp3Url);
-        audio.play();
+        // 녹음이 끝나면 바로 서버로 전송
+        await handleSendAudio(audioBlob);
       };
 
       mediaRecorder.current.start();
@@ -65,35 +48,44 @@ const Speech = () => {
     }
   };
 
-  const convertToMp3 = async (audioBlob) => {
-    if (!ffmpeg) {
-      console.error("FFmpeg is not loaded yet");
-      return audioBlob;
+  const handleSendAudio = async (audioBlob) => {
+    setIsProcessing(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", audioBlob, "recording.wav");
+
+      const response = await fetch("http://43.200.171.25/api/audio", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log(data.transcription);
+    } catch (error) {
+      console.error("Error uploading recording:", error);
+    } finally {
+      setIsProcessing(false);
     }
-
-    const inputName = "input.webm";
-    const outputName = "output.mp3";
-
-    await ffmpeg.writeFile(inputName, await fetchFile(audioBlob));
-
-    await ffmpeg.exec(["-i", inputName, "-acodec", "libmp3lame", outputName]);
-
-    const data = await ffmpeg.readFile(outputName);
-    return new Blob([data.buffer], { type: "audio/mp3" });
   };
 
   return (
     <div>
       <button
         onClick={toggleRecording}
+        disabled={isProcessing}
         className={`ml-2 p-2 rounded-md transition-colors ${
           isRecording
             ? "bg-red-500 text-white hover:bg-red-600"
             : "bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
-        }`}
+        } ${isProcessing ? "opacity-50 cursor-not-allowed" : ""}`}
       >
         <Mic size={20} />
       </button>
+      {isProcessing && <span className="ml-2">Processing...</span>}
     </div>
   );
 };
