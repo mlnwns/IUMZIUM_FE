@@ -85,7 +85,6 @@ const Speech = () => {
       >
         <Mic size={20} />
       </button>
-      {isProcessing && <span className="ml-2">Processing...</span>}
     </div>
   );
 };
