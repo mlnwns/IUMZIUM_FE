@@ -20,6 +20,7 @@ const FinanceApp = () => {
   const [inputMessage, setInputMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
+  const [triggerSendMessage, setTriggerSendMessage] = useState(false);
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
   const toggleDarkMode = () => setIsDarkMode(!isDarkMode);
@@ -30,6 +31,13 @@ const FinanceApp = () => {
   };
 
   useEffect(scrollToBottom, [messages]);
+
+  useEffect(() => {
+    if (triggerSendMessage && inputMessage.trim() !== "") {
+      handleSendMessage();
+      setTriggerSendMessage(false); // Reset trigger
+    }
+  }, [triggerSendMessage, inputMessage]);
 
   const handleSendMessage = async () => {
     if (inputMessage.trim() !== "") {
@@ -67,6 +75,11 @@ const FinanceApp = () => {
     }
   };
 
+  // 음성 입력값 처리
+  const handleSpeechInput = (transcription) => {
+    setInputMessage(transcription);
+    setTriggerSendMessage(true); // Trigger the useEffect to send the message
+  };
   return (
     <div
       className={`min-h-screen ${
@@ -473,7 +486,7 @@ const FinanceApp = () => {
                 >
                   <Send size={20} />
                 </button>
-                <Speech />
+                <Speech onSpeechComplete={handleSpeechInput} />
               </div>
             </div>
           </div>

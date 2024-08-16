@@ -1,7 +1,7 @@
 import React, { useState, useRef } from "react";
 import { Mic } from "lucide-react";
 
-const Speech = () => {
+const Speech = ({ onSpeechComplete }) => {
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const mediaRecorder = useRef(null);
@@ -20,8 +20,6 @@ const Speech = () => {
 
       mediaRecorder.current.onstop = async () => {
         const audioBlob = new Blob(audioChunks.current, { type: "audio/wav" });
-
-        // 녹음이 끝나면 바로 서버로 전송
         await handleSendAudio(audioBlob);
       };
 
@@ -64,7 +62,7 @@ const Speech = () => {
       }
 
       const data = await response.json();
-      console.log(data.transcription);
+      onSpeechComplete(data.transcription);
     } catch (error) {
       console.error("Error uploading recording:", error);
     } finally {
