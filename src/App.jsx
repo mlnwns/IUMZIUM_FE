@@ -14,15 +14,14 @@ import { BarChart2, PieChart, DollarSign, TrendingUp } from "lucide-react";
 
 const FinanceApp = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
-
   const toggleDarkMode = () => setIsDarkMode(!isDarkMode);
   const toggleChat = () => setIsChatOpen(!isChatOpen);
 
@@ -32,20 +31,39 @@ const FinanceApp = () => {
 
   useEffect(scrollToBottom, [messages]);
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (inputMessage.trim() !== "") {
       setMessages([...messages, { text: inputMessage, sender: "user" }]);
       setInputMessage("");
-      // Simulate bot response
-      setTimeout(() => {
+      setIsLoading(true);
+
+      try {
+        const response = await fetch("http://43.200.171.25/api/chat", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ message: inputMessage }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Network response was not ok");
+        }
+
+        const data = await response.json();
+        setMessages((msgs) => [...msgs, { text: data.reply, sender: "bot" }]);
+      } catch (error) {
+        console.error("Error:", error);
         setMessages((msgs) => [
           ...msgs,
           {
-            text: "Thanks for your message. How can I assist you today?",
+            text: "죄송합니다. 오류가 발생했습니다. 다시 시도해 주세요.",
             sender: "bot",
           },
         ]);
-      }, 1000);
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -431,6 +449,11 @@ const FinanceApp = () => {
                   </div>
                 </div>
               ))}
+              {isLoading && (
+                <div className="text-center">
+                  <span className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-gray-900"></span>
+                </div>
+              )}
               <div ref={messagesEndRef} />
             </div>
             <div className="p-4 border-t dark:border-gray-700">
@@ -446,6 +469,7 @@ const FinanceApp = () => {
                 <button
                   onClick={handleSendMessage}
                   className="bg-blue-500 text-white p-2 rounded-r-md hover:bg-blue-600 transition-colors"
+                  disabled={isLoading}
                 >
                   <Send size={20} />
                 </button>
@@ -480,4 +504,5 @@ const FinanceApp = () => {
     </div>
   );
 };
+
 export default FinanceApp;
