@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import Speech from "./Speech";
 import {
   Sun,
   Moon,
@@ -6,7 +7,6 @@ import {
   ChevronDown,
   ArrowRight,
   Send,
-  Mic,
   X,
 } from "lucide-react";
 
@@ -20,6 +20,7 @@ const FinanceApp = () => {
   const [inputMessage, setInputMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
+  const [triggerSendMessage, setTriggerSendMessage] = useState(false);
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
   const toggleDarkMode = () => setIsDarkMode(!isDarkMode);
@@ -30,6 +31,13 @@ const FinanceApp = () => {
   };
 
   useEffect(scrollToBottom, [messages]);
+
+  useEffect(() => {
+    if (triggerSendMessage && inputMessage.trim() !== "") {
+      handleSendMessage();
+      setTriggerSendMessage(false); // Reset trigger
+    }
+  }, [triggerSendMessage, inputMessage]);
 
   const handleSendMessage = async () => {
     if (inputMessage.trim() !== "") {
@@ -67,6 +75,11 @@ const FinanceApp = () => {
     }
   };
 
+  // 음성 입력값 처리
+  const handleSpeechInput = (transcription) => {
+    setInputMessage(transcription);
+    setTriggerSendMessage(true); // Trigger the useEffect to send the message
+  };
   return (
     <div
       className={`min-h-screen ${
@@ -473,9 +486,7 @@ const FinanceApp = () => {
                 >
                   <Send size={20} />
                 </button>
-                <button className="ml-2 bg-gray-200 text-gray-700 p-2 rounded-md hover:bg-gray-300 transition-colors dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600">
-                  <Mic size={20} />
-                </button>
+                <Speech onSpeechComplete={handleSpeechInput} />
               </div>
             </div>
           </div>
