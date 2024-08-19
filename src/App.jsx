@@ -47,13 +47,16 @@ const FinanceApp = () => {
       setIsLoading(true);
 
       try {
-        const response = await fetch("https://43.200.171.25.nip.io/api/chat", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ message: inputMessage }),
-        });
+        const response = await fetch(
+          "https://3bde-125-191-146-119.ngrok-free.app/api/chat",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ message: inputMessage }),
+          }
+        );
 
         if (!response.ok) {
           throw new Error("Network response was not ok");
