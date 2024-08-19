@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 
 import { BarChart2, PieChart, DollarSign, TrendingUp } from "lucide-react";
+import Voice from "./Voice";
 
 const FinanceApp = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -46,7 +47,7 @@ const FinanceApp = () => {
       setIsLoading(true);
 
       try {
-        const response = await fetch("http://43.200.171.25/api/chat", {
+        const response = await fetch("https://43.200.171.25.nip.io/api/chat", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
