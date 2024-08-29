@@ -52,21 +52,22 @@ const Speech = ({ onSpeechComplete }) => {
       const formData = new FormData();
       formData.append("file", audioBlob, "recording.wav");
 
-      const response = await fetch("http://43.200.171.25/api/audio", {
-        method: "POST",
-        body: formData,
-      });
+      const response = await fetch(
+        "https://2024-36-38-187-106.ngrok-free.app/api/audio/rasa/",
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-
-      const data = await response.json();
-      onSpeechComplete(data.transcription);
     } catch (error) {
       console.error("Error uploading recording:", error);
     } finally {
       setIsProcessing(false);
+      console.log(response);
     }
   };
 
